@@ -3,6 +3,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import html2canvas from 'html2canvas';
 import ColorColumn from './ColorColumn';
+import SavePaletteModal from './SavePaletteModal';
 import {
   ColorData,
   Palette,
@@ -18,6 +19,7 @@ function App() {
   const [saturationShift, setSaturationShift] = useState(0);
   const [brightnessShift, setBrightnessShift] = useState(0);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
   const paletteRef = useRef<HTMLDivElement>(null);
 
   // Initialize with 5 colors
@@ -29,9 +31,14 @@ function App() {
 
   // Load favorites from localStorage
   const loadFavorites = () => {
-    const saved = localStorage.getItem('colorPaletteFavorites');
-    if (saved) {
-      setFavorites(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem('colorPaletteFavorites');
+      if (saved) {
+        setFavorites(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error('Failed to load favorites:', error);
+      setFavorites([]);
     }
   };
 
@@ -166,16 +173,13 @@ function App() {
     link.click();
   };
 
-  const savePaletteToFavorites = () => {
-    const name = prompt('Enter a name for this palette:');
-    if (name) {
-      const newPalette: Palette = {
-        id: `palette-${Date.now()}`,
-        name,
-        colors: adjustedColors.map((c) => ({ ...c })),
-      };
-      saveFavorites([...favorites, newPalette]);
-    }
+  const savePaletteToFavorites = (name: string) => {
+    const newPalette: Palette = {
+      id: `palette-${Date.now()}`,
+      name,
+      colors: adjustedColors.map((c) => ({ ...c })),
+    };
+    saveFavorites([...favorites, newPalette]);
   };
 
   const loadPalette = (palette: Palette) => {
@@ -273,7 +277,7 @@ function App() {
 
               {/* Favorites */}
               <button
-                onClick={savePaletteToFavorites}
+                onClick={() => setShowSaveModal(true)}
                 className="px-4 py-2 bg-pink-600 hover:bg-pink-700 rounded transition-colors flex items-center gap-2"
                 title="Save to favorites"
               >
@@ -423,6 +427,13 @@ function App() {
           Press <kbd className="px-2 py-1 bg-gray-700 rounded">Spacebar</kbd> to generate new palette • 
           Click hex to copy • Drag to reorder • {colors.length}/10 colors
         </footer>
+
+        {/* Save Palette Modal */}
+        <SavePaletteModal
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={savePaletteToFavorites}
+        />
       </div>
     </DndProvider>
   );

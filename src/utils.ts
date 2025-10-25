@@ -143,7 +143,7 @@ export const adjustColor = (
   brightnessShift: number
 ): string => {
   const hsl = hexToHSL(hex);
-  const newH = (hsl.h + hueShift) % 360;
+  const newH = ((hsl.h + hueShift) % 360 + 360) % 360;
   const newS = Math.max(0, Math.min(100, hsl.s + saturationShift));
   const newL = Math.max(0, Math.min(100, hsl.l + brightnessShift));
   return hslToHex(newH, newS, newL);
@@ -157,7 +157,12 @@ export const extractColorsFromImage = (file: File): Promise<string[]> => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d')!;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          resolve([]);
+          return;
+        }
         
         // Scale down for performance
         const maxSize = 100;

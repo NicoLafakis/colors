@@ -50,9 +50,33 @@ const ColorColumn: React.FC<ColorColumnProps> = ({
   });
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(color.toUpperCase());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(color.toUpperCase())
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        })
+        .catch(() => {
+          // Fallback: copy failed
+          setCopied(false);
+        });
+    } else {
+      // Fallback for older browsers
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = color.toUpperCase();
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      } catch (err) {
+        setCopied(false);
+      }
+    }
   };
 
   const textColor = getContrastColor(color);
